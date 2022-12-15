@@ -5,7 +5,7 @@ from spherov2.commands.animatronic import R2LegActions, Animatronic
 from spherov2.commands.api_and_shell import ApiAndShell
 from spherov2.commands.core import IntervalOptions, Core
 from spherov2.commands.io import AudioPlaybackModes, IO, FrameRotationOptions, FadeOverrideOptions
-from spherov2.commands.power import Power
+from spherov2.commands.power import Power, FullBatteryState, BatteryStates
 from spherov2.commands.sensor import CollisionDetectionMethods, Sensor, SensitivityBasedCollisionDetectionMethods, \
     SensitivityLevels
 from spherov2.commands.sphero import CollisionDetectionMethods as SpheroCollisionDetectionMethods, Sphero
@@ -620,7 +620,7 @@ class ToyUtil:
             toy.enable_battery_voltage_state_change_notify(enable)
         elif not_supported_handler:
             not_supported_handler()
-
+            
     @staticmethod
     def calibrate_compass(toy: Toy, not_supported_handler: Callable[[], None] = None):
         if toy.implements(Sensor.magnetometer_calibrate_to_north):
@@ -641,6 +641,43 @@ class ToyUtil:
             toy.set_compressed_frame_player_single_character(color.r, color.g, color.b, character)
         elif not_supported_handler:
             not_supported_handler()
+
+    @staticmethod
+    def get_full_battery_status(toy: Toy, not_supported_handler: Callable[[], None] = None):
+        if toy.implements(Core.get_power_state):  # Sphero, Ollie, BB8, Sprk2
+            power_state = toy.get_power_state()
+            full_state = FullBatteryState(
+                state=BatteryStates[power_state.state.name],
+                voltage=power_state.voltage,
+                number_of_charges=power_state.number_of_charges,
+                time_since_last_charge=power_state.time_since_last_charge
+            )
+        elif toy.implements(Power.get_battery_state):  # Mini, BB9E, R2D2, R2Q5
+            battery_state = toy.get_battery_state()
+            full_state = FullBatteryState(
+                state=battery_state
+            )
+        elif toy.implements(Power.get_battery_voltage_state):  # BOLT, RVR, (R2D2, R2Q5)
+            battery_voltage_state = toy.get_battery_voltage_state()
+            full_state = FullBatteryState(
+                state=BatteryStates[battery_voltage_state.state.name]
+            )
+        elif not_supported_handler:
+            not_supported_handler()
+            return
+        
+        # State is filled in or we returned None. Now fill in additional data.
+        if toy.implements(Power.get_battery_percentage):  # Mini, RVR
+            full_state.percentage = toy.get_battery_percentage()
+        if toy.implements(Power.get_battery_voltage):  # Mini, BOLT, BB9E, R2D2, R2Q5
+            full_state.voltage = toy.get_battery_voltage()
+        if toy.implements(Power.get_battery_voltage_in_volts):  # RVR
+            full_state.voltage = toy.get_battery_voltage_in_volts()
+            
+        # TODO: BOLT implements battery_voltage_state and charger_state separately.
+        #       Can we combine them?
+        
+        return full_state
 
     @staticmethod
     def set_color_detection(toy: Toy, enable: bool, not_supported_handler: Callable[[], None] = None):

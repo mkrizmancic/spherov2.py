@@ -1,5 +1,6 @@
 import struct
 from enum import IntEnum, IntFlag
+from dataclasses import dataclass
 
 from spherov2.commands import Commands
 from spherov2.helper import to_int
@@ -60,6 +61,14 @@ class AmplifierIds(IntEnum):
 class EfuseIds(IntEnum):
     PRIMARY_EFUSE = 0
 
+    
+@dataclass
+class FullBatteryState(object):
+    state: BatteryStates
+    voltage: float = -1.0
+    percentage: int = -1
+    time_since_last_charge: int = -1
+    number_of_charges: int = -1
 
 class Power(Commands):
     _did = 19

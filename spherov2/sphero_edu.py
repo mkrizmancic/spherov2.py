@@ -763,6 +763,9 @@ class SpheroEduAPI:
 
         ``get_main_led().b`` is the blue channel, from 0 - 255."""
         return self.__leds.get('main', None)
+    
+    def get_battery(self):
+        return ToyUtil.get_full_battery_status(self.__toy)
 
     # Sphero BOLT Sensors
     # TODO verify that it is the same value as API (relative to current heading or reset heading)
