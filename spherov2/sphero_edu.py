@@ -159,7 +159,7 @@ class SpheroEduAPI:
             self.__raw_motor = rawMotor(0, 0)
             self.__update_raw_motor()
 
-    def roll(self, heading: int, speed: int, duration: float):
+    def roll(self, heading: int, speed: int, duration: float=None):
         """Combines heading(0-360°), speed(-255-255), and duration to make the robot roll with one line of code.
         For example, to have the robot roll at 90°, at speed 200 for 2s, use ``roll(90, 200, 2)``"""
         if isinstance(self.__toy, Mini) and speed != 0:
@@ -169,8 +169,9 @@ class SpheroEduAPI:
         if speed < 0:
             self.__heading = (self.__heading + 180) % 360
         self.__update_speed()
-        time.sleep(duration)
-        self.stop_roll()
+        if duration is not None:
+            time.sleep(duration)
+            self.stop_roll()
 
     def __update_speed(self):
         ToyUtil.roll_start(self.__toy, self.__heading, self.__speed)
